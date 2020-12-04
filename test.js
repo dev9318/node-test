@@ -1,6 +1,7 @@
 var mysql = require('mysql');
 const express = require("express");
 const session = require('express-session');
+const fileUpload = require('express-fileupload');
 var cors = require('cors');
 const uuid = require('uuid');
 require('dotenv').config();
@@ -79,4 +80,3 @@ app.use(cors({
     next();
   }
   app.use(cors2);
-  
