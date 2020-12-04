@@ -59,8 +59,24 @@ app.use(session({
 	saveUninitialized: true
 }));
 
-var corsOptions = {
-  credentials: true
-};
 
-app.use(cors(corsOptions));
+app.use(cors({
+    origin: '*',
+    credentials: true
+  }));
+  var cors2 = function(req, res, next) {
+    // var whitelist = [
+    //   STUDENT_URL,
+    //   VERIFIER_URL,
+    // ];
+    // var origin = req.headers.origin;
+  
+    // if (whitelist.indexOf(origin) > -1) {
+    //   res.setHeader('Access-Control-Allow-Origin', origin);
+    // }
+    res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    next();
+  }
+  app.use(cors2);
+  
