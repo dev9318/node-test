@@ -81,4 +81,4 @@ app.use(cors({
   }
 app.use(cors2);
 
-app.use(fileUpload);
+app.use(fileUpload());
