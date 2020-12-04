@@ -1,7 +1,10 @@
 var mysql = require('mysql');
 const express = require("express");
-var app = express();
 const uuid = require('uuid');
+require('dotenv').config();
+
+
+var app = express();
 
 var con = mysql.createConnection({
   host: process.env.HOST,
