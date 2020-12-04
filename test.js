@@ -1,16 +1,17 @@
 var mysql = require('mysql');
 const express = require("express");
+const session = require('express-session');
 const uuid = require('uuid');
 require('dotenv').config();
 
 
 var app = express();
 
-var con = mysql.createConnection({
-  host: process.env.HOST,
-  user: process.env.USER,
-  password: process.env.PASSWORD,
-  database: process.env.DATABASE
+var db = mysql.createConnection({
+  host: "127.0.0.1",
+  user: "root",
+  password: "dev@1234",
+  port: 3306,
 });
 
 function createTables() {
@@ -35,7 +36,7 @@ function createTables() {
 	});
 }
 
-con.connect(function(err) {
+db.connect(function(err) {
   if (err) throw err;
   console.log("Connected!");
   // con.query("CREATE DATABASE testing", function (err, result) {
