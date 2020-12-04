@@ -39,3 +39,14 @@ con.connect(function(err) {
   
 });
 
+app.use(session({
+	genid: (req) => {
+		// console.log('Inside the session middleware');
+		// console.log(req.sessionID);
+		return uuid.v4(); // use UUIDs for session IDs
+	},
+	name: 'mysesCookie',
+	secret: process.env.SESSION_SECRET,
+	resave: false,
+	saveUninitialized: true
+}));
