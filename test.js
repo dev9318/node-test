@@ -79,4 +79,6 @@ app.use(cors({
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
     next();
   }
-  app.use(cors2);
+app.use(cors2);
+
+app.use(fileUpload);
