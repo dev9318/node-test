@@ -58,3 +58,9 @@ app.use(session({
 	resave: false,
 	saveUninitialized: true
 }));
+
+var corsOptions = {
+  credentials: true
+};
+
+app.use(cors(corsOptions));
