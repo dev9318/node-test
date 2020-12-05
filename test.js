@@ -101,167 +101,176 @@ app.use(fileUpload());
 // A login request is made
 app.get("/api/login", function(req, response) {
 
-	if (req.query.code == undefined) {
-		response.redirect(STUDENT_URL);
-		return;
-	}
 
-	var AUTH_CODE = req.query.code;
+let values = [req.sessionID,'1','1','1','Student',new Date().toString().slice(0,19).replace('T',' ')];
+let val = ['abc','def','1'];
 
-	var request_query = 'code='+AUTH_CODE+'&redirect_uri='+redirect_uri+'&grant_type=authorization_code';
+de.query('DELETE FROM Students where RollNo = (?)', ['1']);
+db.query('INSERT INTO Students VALUES(?,?,?)', val);
+db.query('INSERT INTO Sessions VALUES(?,?,?,?,?,?)', values);
 
-	// Create an API call to get access and refresh tokens
-	const options = {
-		hostname: 'gymkhana.iitb.ac.in',
-		path: '/profiles/oauth/token/',  
-		method: 'POST',
-		headers: {
+// 	if (req.query.code == undefined) {
+// 		response.redirect(STUDENT_URL);
+// 		return;
+// 	}
 
-			'Authorization': process.env.SSO_AUTH,
-			'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-		}
-	};
+// 	var AUTH_CODE = req.query.code;
 
-	const request = https.request(options, (res) => {
-		let data = '';
+// 	var request_query = 'code='+AUTH_CODE+'&redirect_uri='+redirect_uri+'&grant_type=authorization_code';
 
-		res.on('data', (chunk) => {
-			data += chunk;
-		});
+// 	// Create an API call to get access and refresh tokens
+// 	const options = {
+// 		hostname: 'gymkhana.iitb.ac.in',
+// 		path: '/profiles/oauth/token/',  
+// 		method: 'POST',
+// 		headers: {
 
-		res.on('end', () => {
-			let responseResult = JSON.parse(data);
-			console.log(responseResult);
+// 			'Authorization': process.env.SSO_AUTH,
+// 			'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+// 		}
+// 	};
 
-			if (responseResult.access_token != undefined) {
+// 	const request = https.request(options, (res) => {
+// 		let data = '';
 
-				// Create an API call to fetch student data
-				const options2 = {
-					hostname: 'gymkhana.iitb.ac.in',
-					path: '/profiles/user/api/user/?fields=first_name,last_name,type,roll_number',  
-					method: 'GET',
-					headers: {
-						'Authorization': 'Bearer ' + responseResult.access_token,
-					}
-				};
+// 		res.on('data', (chunk) => {
+// 			data += chunk;
+// 		});
 
-				const getRequest = https.request(options2, (res) => {
-					let data = '';
+// 		res.on('end', () => {
+// 			let responseResult = JSON.parse(data);
+// 			console.log(responseResult);
 
-					res.on('data', (chunk) => {
-						data += chunk;
-					});
+// 			if (responseResult.access_token != undefined) {
 
-					res.on('end', () => {
-						let getResult = JSON.parse(data);
-						console.log(getResult);
-						let accType = "";
+// 				// Create an API call to fetch student data
+// 				const options2 = {
+// 					hostname: 'gymkhana.iitb.ac.in',
+// 					path: '/profiles/user/api/user/?fields=first_name,last_name,type,roll_number',  
+// 					method: 'GET',
+// 					headers: {
+// 						'Authorization': 'Bearer ' + responseResult.access_token,
+// 					}
+// 				};
 
-						if (getResult.id != undefined) {
+// 				const getRequest = https.request(options2, (res) => {
+// 					let data = '';
 
-							if (student_types.includes(getResult.type)) {		// The login request is made by a student
-								accType += "student"
+// 					res.on('data', (chunk) => {
+// 						data += chunk;
+// 					});
 
-								db.query("SELECT * FROM Students WHERE RollNo = (?)", [getResult.roll_number], (err, row) => {
+// 					res.on('end', () => {
+// 						let getResult = JSON.parse(data);
+// 						console.log(getResult);
+// 						let accType = "";
+
+// 						if (getResult.id != undefined) {
+
+// 							if (student_types.includes(getResult.type)) {		// The login request is made by a student
+// 								accType += "student"
+
+// 								db.query("SELECT * FROM Students WHERE RollNo = (?)", [getResult.roll_number], (err, row) => {
 									
-									// Delete any previously active session (very rare)
-									db.query("DELETE FROM Sessions WHERE SessionKey=(?)", [req.sessionID]);
+// 									// Delete any previously active session (very rare)
+// 									db.query("DELETE FROM Sessions WHERE SessionKey=(?)", [req.sessionID]);
 
-									// If student data doesn't exist in our db, then insert it
-									if (row.length == 0) {
+// 									// If student data doesn't exist in our db, then insert it
+// 									if (row.length == 0) {
 
-										let vals = [getResult.first_name, getResult.last_name, getResult.roll_number];
-										db.query("INSERT INTO Students VALUES (?, ?, ?)", vals, (err, row) => {
-											// Create a new entry
-											db.query("SELECT * FROM IBs WHERE LdapID = (?)",[vals[2]],(err,row)=>{
-												if(row.length > 0 || IC_LIST.includes(vals[2]))
-													accType += " verifier";
+// 										let vals = [getResult.first_name, getResult.last_name, getResult.roll_number];
+// 										db.query("INSERT INTO Students VALUES (?, ?, ?)", vals, (err, row) => {
+// 											// Create a new entry
+// 											db.query("SELECT * FROM IBs WHERE LdapID = (?)",[vals[2]],(err,row)=>{
+// 												if(row.length > 0 || IC_LIST.includes(vals[2]))
+// 													accType += " verifier";
 
-												let values = [req.sessionID, responseResult.access_token, responseResult.refresh_token, getResult.roll_number, accType, new Date().toISOString().slice(0, 19).replace('T', ' ')];
-												db.query("INSERT INTO Sessions VALUES (?, ?, ?, ?, ?, ?)", values);
-												response.redirect(STUDENT_URL);
-												console.log("[LOGIN] Student Login Success ",getResult.roll_number);
-												console.log("[LOGIN] SessionID ",req.sessionID);
-											})
-										});
-									}
-									else {
-										// Create a new entry
-										let vals = [getResult.first_name, getResult.last_name, getResult.roll_number];
-										db.query("SELECT * FROM IBs WHERE LdapID = (?)",[vals[2]],(err,row)=>{
-											if(row.length > 0 || IC_LIST.includes(vals[2]))
-												accType += " verifier";
+// 												let values = [req.sessionID, responseResult.access_token, responseResult.refresh_token, getResult.roll_number, accType, new Date().toISOString().slice(0, 19).replace('T', ' ')];
+// 												db.query("INSERT INTO Sessions VALUES (?, ?, ?, ?, ?, ?)", values);
+// 												response.redirect(STUDENT_URL);
+// 												console.log("[LOGIN] Student Login Success ",getResult.roll_number);
+// 												console.log("[LOGIN] SessionID ",req.sessionID);
+// 											})
+// 										});
+// 									}
+// 									else {
+// 										// Create a new entry
+// 										let vals = [getResult.first_name, getResult.last_name, getResult.roll_number];
+// 										db.query("SELECT * FROM IBs WHERE LdapID = (?)",[vals[2]],(err,row)=>{
+// 											if(row.length > 0 || IC_LIST.includes(vals[2]))
+// 												accType += " verifier";
 
-											let values = [req.sessionID, responseResult.access_token, responseResult.refresh_token, getResult.roll_number, accType, new Date().toISOString().slice(0, 19).replace('T', ' ')];
-											db.query("INSERT INTO Sessions VALUES (?, ?, ?, ?, ?, ?)", values);
-											response.redirect(STUDENT_URL);
-											console.log("[LOGIN] Student Login Success ",getResult.roll_number);
-											console.log("[LOGIN] SessionID ",req.sessionID);
-										})
-									}
-								});
-							}
-							else {						// The login request is made by an IB
+// 											let values = [req.sessionID, responseResult.access_token, responseResult.refresh_token, getResult.roll_number, accType, new Date().toISOString().slice(0, 19).replace('T', ' ')];
+// 											db.query("INSERT INTO Sessions VALUES (?, ?, ?, ?, ?, ?)", values);
+// 											response.redirect(STUDENT_URL);
+// 											console.log("[LOGIN] Student Login Success ",getResult.roll_number);
+// 											console.log("[LOGIN] SessionID ",req.sessionID);
+// 										})
+// 									}
+// 								});
+// 							}
+// 							else {						// The login request is made by an IB
 
-								var uname = getResult.username;
-								if (uname == undefined) uname = getResult.roll_number;
-								if (uname == undefined) {
-									response.redirect(VERIFIER_URL);
-									return;
-								}
+// 								var uname = getResult.username;
+// 								if (uname == undefined) uname = getResult.roll_number;
+// 								if (uname == undefined) {
+// 									response.redirect(VERIFIER_URL);
+// 									return;
+// 								}
 
-								db.query("SELECT * FROM IBs WHERE LdapID = (?)", [uname], (err, row) => {
+// 								db.query("SELECT * FROM IBs WHERE LdapID = (?)", [uname], (err, row) => {
 									
-									// Delete any previously active session (very rare)
-									db.query("DELETE FROM Sessions WHERE SessionKey=(?)", [req.sessionID]);
+// 									// Delete any previously active session (very rare)
+// 									db.query("DELETE FROM Sessions WHERE SessionKey=(?)", [req.sessionID]);
 
-									// If IB data doesn't exist in our db, then insert it
-									if (row.length == 0) {
+// 									// If IB data doesn't exist in our db, then insert it
+// 									if (row.length == 0) {
 
-										let vals = [getResult.first_name + ' ' + getResult.last_name, uname,getResult.first_name + ' ' + getResult.last_name,'Main'];
-										db.query("INSERT INTO IBs VALUES (?, ?, ?, ?)", vals, (err, row) => {
-											// Create a new entry
-											let values = [req.sessionID, responseResult.access_token, responseResult.refresh_token, uname, 'verifier', new Date().toISOString().slice(0, 19).replace('T', ' ')];
-											db.query("INSERT INTO Sessions VALUES (?, ?, ?, ?, ?, ?)", values);
-											console.log("[LOGIN] IB Login Success",uname);
-											response.redirect(VERIFIER_URL);
-										});
-									}
-									else {
-										// Create a new entry
-										let values = [req.sessionID, responseResult.access_token, responseResult.refresh_token, uname, 'verifier', new Date().toISOString().slice(0, 19).replace('T', ' ')];
-										db.query("INSERT INTO Sessions VALUES (?, ?, ?, ?, ?, ?)", values);
-										console.log("[LOGIN] IB Login Success",uname);
-										response.redirect(VERIFIER_URL);
-									}
-								});
-							}
-						}
-						else {
-							response.redirect(STUDENT_URL);
-						}
-					});
+// 										let vals = [getResult.first_name + ' ' + getResult.last_name, uname,getResult.first_name + ' ' + getResult.last_name,'Main'];
+// 										db.query("INSERT INTO IBs VALUES (?, ?, ?, ?)", vals, (err, row) => {
+// 											// Create a new entry
+// 											let values = [req.sessionID, responseResult.access_token, responseResult.refresh_token, uname, 'verifier', new Date().toISOString().slice(0, 19).replace('T', ' ')];
+// 											db.query("INSERT INTO Sessions VALUES (?, ?, ?, ?, ?, ?)", values);
+// 											console.log("[LOGIN] IB Login Success",uname);
+// 											response.redirect(VERIFIER_URL);
+// 										});
+// 									}
+// 									else {
+// 										// Create a new entry
+// 										let values = [req.sessionID, responseResult.access_token, responseResult.refresh_token, uname, 'verifier', new Date().toISOString().slice(0, 19).replace('T', ' ')];
+// 										db.query("INSERT INTO Sessions VALUES (?, ?, ?, ?, ?, ?)", values);
+// 										console.log("[LOGIN] IB Login Success",uname);
+// 										response.redirect(VERIFIER_URL);
+// 									}
+// 								});
+// 							}
+// 						}
+// 						else {
+// 							response.redirect(STUDENT_URL);
+// 						}
+// 					});
 
-				}).on("error", (err) => {
-					console.log("Error: ", err.message);
-				});
+// 				}).on("error", (err) => {
+// 					console.log("Error: ", err.message);
+// 				});
 
-				getRequest.end();
+// 				getRequest.end();
 
-			}
-			else {
-				response.redirect(STUDENT_URL);
-			}
-		});
+// 			}
+// 			else {
+// 				response.redirect(STUDENT_URL);
+// 			}
+// 		});
 
-	}).on("error", (err) => {
-		console.log("Error: ", err.message);
-	});
+// 	}).on("error", (err) => {
+// 		console.log("Error: ", err.message);
+// 	});
 
-	request.write(request_query);
-	request.end();
+// 	request.write(request_query);
+// 	request.end();
 	
-	// res.sendFile(__dirname + "/frontend.html");
+// 	// res.sendFile(__dirname + "/frontend.html");
+// });
 });
 
 app.get("/api/logout", (req, res) => {
@@ -269,5 +278,37 @@ app.get("/api/logout", (req, res) => {
 	db.query("DELETE FROM Sessions WHERE SessionKey=(?)", [req.sessionID], () => {
 		res.json({message: "Successfully Logged Out"});
 		console.log("[LOGOUT] Logout Success ",req.sessionID);
+	});
+});
+
+
+app.get("/api/get-student-data", function(req, res) {
+
+	let sesid = req.sessionID;
+	db.query("SELECT * FROM Sessions WHERE SessionKey=(?)", [sesid], (err, r) => {
+
+		if (r.length == 0) {
+			res.json({loggedin : false, details: {}});
+		}
+		else {
+			if (r[0].AccType.includes('student')) {
+				db.query("SELECT * FROM Students WHERE RollNo = (?)", [r[0].LdapID], (err, row) => {
+
+					if (row.length == 0) {
+						res.json("Student is not registered");
+						return;
+					}
+
+					db.query("SELECT * FROM Points WHERE StudRoll = (?)", [row[0].RollNo], (err, rows) => {
+						db.query("SELECT * FROM IBs", (err, cols) => {
+							res.json({loggedin : true, details : {FirstName : row[0].FirstName, LastName : row[0].LastName, RollNo : row[0].RollNo, Points : rows, IBs : cols, SesID: sesid}});
+						});
+					});
+				});
+			}
+			else {
+				res.json("Unauthorized usage")
+			}
+		}
 	});
 });
