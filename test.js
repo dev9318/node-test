@@ -33,6 +33,7 @@ var db = mysql.createConnection({
   host: "127.0.0.1",
   user: "root",
   password: "dev@1234",
+  database: "testing",
   port: 3306,
 });
 
