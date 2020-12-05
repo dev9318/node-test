@@ -7,7 +7,7 @@ var app = express();
 const uuid = require('uuid');
 const session = require('express-session');
 var cors = require('cors');
-//var fs = require('fs');
+var fs = require('fs');
 const fileUpload = require('express-fileupload');
 // var multer = require('multer');
 // var upload = multer();
@@ -327,13 +327,14 @@ app.get("api/tech/projects",function(req, res) {
 	db.query("SELECT * FROM Sessions WHERE SessionKey=(?)", [sesid], (err, r) => {
 
 		if (r.length == 0) {
-			res.json({loggedin : false, details: {}});
+			res.json({loggedin: false, details: {}});
 		}
 		else {
 				db.query("SELECT * FROM Projects", (err, row) => {
 
 					if (row.length == 0) {
-						res.json("No Projects");
+						res.json({loggedin: true, error: "No Projects"});
+						console.log(`[ERROR] No Projects to show.`);
 						return;
 					}
 
@@ -348,8 +349,39 @@ app.get("api/tech/projects",function(req, res) {
 	});
 });
 
-app.get("api/tech/projects",function(req, res){
+app.get("api/tech/doc",function(req, res){
 
+	let sesid = req.sessionID;
+	var pid = req.query.pid;
+	
+	db.query("SELECT * FROM Sessions WHERE SessionKey=(?)", [sesid], (err, r) => {
+		if (r.length == 0)
+			response.json({message: "Unauthorized access"});
+		else if(!pid) 
+			response.json({message: "Invalid request"});		
+		else {
+			db.query("SELECT * FROM Projects WHERE pid=(?)", [pid], (err, row) => {
+				if (row.length == 0 || !row[0].documentation) 
+					response.json({message: "No document found"});
+
+				row = row[0];
+				var filepath = './docs/' + pid + 'doc';
+				fs.readFile(filepath, (err, data) => {
+					if (err) {
+						response.json({message: "Error in reading file"});
+						console.log(`[ERROR] Document with ${pid} not readable.`);
+					}
+					else {
+						console.log(`Document with PID: ${pid} requested.`);
+						response.setHeader('Content-type', row.documentation);
+						response.setHeader('X-Robots-Tag','noindex, nofollow')
+						response.write(data);
+						return response.end();
+					}
+				});
+			});
+		}
+	});
 });
 
 
