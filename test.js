@@ -324,7 +324,28 @@ app.get("/api/get-student-data", function(req, res) {
 app.get("api/tech/projects",function(req, res) {
 
 	let sesid = req.sessionID;
-	let RollNo
+	db.query("SELECT * FROM Sessions WHERE SessionKey=(?)", [sesid], (err, r) => {
+
+		if (r.length == 0) {
+			res.json({loggedin : false, details: {}});
+		}
+		else {
+				db.query("SELECT * FROM Projects", (err, row) => {
+
+					if (row.length == 0) {
+						res.json("No Projects");
+						return;
+					}
+
+					data = {loggedin: true, roll: roll, projects: []};
+					for (r of rows) {
+						data.projects[data.projects.length] = {pid: r.pid,name: r.name, initiative_club: r.initiative_club, poc: r.poc, poc_contact: r.poc_contact, abstract: r.abstract, funds_allocated: r.funds_allocated, funds_reimbursed: r.funds_reimbursed, documentation: r.documentation, timeline: r.timeline, comments: r.comments, approved: r.approved, completed: r.completed, archived: r.archived};
+					}
+					response.json(data);
+				});
+			
+		}
+	});
 });
 
 
