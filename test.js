@@ -28,8 +28,8 @@ function createTables() {
   });
 
   // Code to create Projects table
-	db.query('CREATE TABLE Sessions(SessionKey varchar(255), AccessToken varchar(255), RefreshToken varchar(255), LdapID varchar(255), AccType varchar(255), LoginTime varchar(255))', (err) => {
-		if (err) console.log("Session table exists");
+	db.query('CREATE TABLE Projects(pid varchar(255), name varchar(255), initiative_club varchar(255), poc varchar(255), poc_contact varchar(255), abstract varchar(255), funds_allocated FLOAT(20,5), funds_reimbursed float(20,5), documentation varchar(255), timeline varchar(255), comments varchar(255), approved boolean, completed boolean, archived boolean)', (err) => {
+		if (err) console.log("Projects table exists");
   });
 }
 
