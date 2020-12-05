@@ -22,8 +22,8 @@ function createTables() {
 		if (err) console.log("Students table exists");
 	});
 
-	// Code to create Session table
-	db.query('CREATE TABLE Sessions(SessionKey varchar(255), AccessToken varchar(255), RefreshToken varchar(255), LdapID varchar(255), AccType varchar(255), LoginTime datetime)', (err) => {
+  // Code to create Session table
+	db.query('CREATE TABLE Sessions(SessionKey varchar(255), AccessToken varchar(255), RefreshToken varchar(255), LdapID varchar(255), AccType varchar(255), LoginTime varchar(255))', (err) => {
 		if (err) console.log("Session table exists");
 	});
 }
@@ -74,22 +74,22 @@ app.use(myParser.json());
 // app.use(upload.array());
 var allowedOrigins = [STUDENT_URL, VERIFIER_URL];
 var corsOptions = {
-    origin: 'http://localhost:4200',
+    //origin: 'http://localhost:4200',
     credentials: true
 };
 
 app.use(cors(corsOptions));
 
 var cors2 = function(req, res, next) {
-  var whitelist = [
-    STUDENT_URL,
-    VERIFIER_URL,
-  ];
-  var origin = req.headers.origin;
+  // var whitelist = [
+  //   STUDENT_URL,
+  //   VERIFIER_URL,
+  // ];
+  // var origin = req.headers.origin;
 
-  if (whitelist.indexOf(origin) > -1) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
+  // if (whitelist.indexOf(origin) > -1) {
+  //   res.setHeader('Access-Control-Allow-Origin', origin);
+  // }
   res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
   next();
@@ -103,12 +103,14 @@ app.use(fileUpload());
 app.get("/api/login", function(req, response) {
 
 
-let values = [req.sessionID,'1','1','1','Student',new Date().toString().slice(0,19).replace('T',' ')];
+let values = [req.sessionID,'1','1','1','student','22222'];
 let val = ['abc','def','1'];
 
-de.query('DELETE FROM Students where RollNo = (?)', ['1']);
+db.query('DELETE FROM Students where RollNo = (?)', ['1']);
 db.query('INSERT INTO Students VALUES(?,?,?)', val);
 db.query('INSERT INTO Sessions VALUES(?,?,?,?,?,?)', values);
+console.log("made it here!!!");
+response.redirect(STUDENT_URL);
 
 // 	if (req.query.code == undefined) {
 // 		response.redirect(STUDENT_URL);
@@ -313,3 +315,6 @@ app.get("/api/get-student-data", function(req, res) {
 		}
 	});
 });
+
+
+app.listen(8080);
