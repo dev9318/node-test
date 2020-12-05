@@ -384,5 +384,39 @@ app.get("api/tech/doc",function(req, res){
 	});
 });
 
+app.get("api/tech/timeline",function(req, res){
+
+	let sesid = req.sessionID;
+	var pid = req.query.pid;
+	
+	db.query("SELECT * FROM Sessions WHERE SessionKey=(?)", [sesid], (err, r) => {
+		if (r.length == 0)
+			response.json({message: "Unauthorized access"});
+		else if(!pid) 
+			response.json({message: "Invalid request"});		
+		else {
+			db.query("SELECT * FROM Projects WHERE pid=(?)", [pid], (err, row) => {
+				if (row.length == 0 || !row[0].timeline) 
+					response.json({message: "No document found"});
+
+				row = row[0];
+				var filepath = './docs/' + pid + 'timeline';
+				fs.readFile(filepath, (err, data) => {
+					if (err) {
+						response.json({message: "Error in reading file"});
+						console.log(`[ERROR] Timeline with ${pid} not readable.`);
+					}
+					else {
+						console.log(`Timeline with PID: ${pid} requested.`);
+						response.setHeader('Content-type', row.timeline);
+						response.setHeader('X-Robots-Tag','noindex, nofollow')
+						response.write(data);
+						return response.end();
+					}
+				});
+			});
+		}
+	});
+});
 
 app.listen(8080);
