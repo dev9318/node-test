@@ -17,23 +17,23 @@ var db = mysql.createConnection({
 });
 
 function createTables() {
-	// Code to create students' table
+	// Creating a table to store the student's data
 	db.query('CREATE TABLE Students(FirstName varchar(255), LastName varchar(255), RollNo varchar(255))', (err) => {
 		if (err) console.log("Students table exists");
 	});
 
-	// Code to create Session table
+	// Creating a table to store the value of the session
 	db.query('CREATE TABLE Sessions(SessionKey varchar(255), AccessToken varchar(255), RefreshToken varchar(255), LdapID varchar(255), AccType varchar(255), LoginTime datetime)', (err) => {
 		if (err) console.log("Session table exists");
 	});
 
-	// Code to create IBs (Institute Bodies) table
+	// 
 	db.query('CREATE TABLE IBs(Name varchar(255), LdapID varchar(255), ParentBody varchar(255), Department varchar(255))', (err) => {
 		if (err) console.log("IBs table exists");
 	});
 
-	// Code to create Points table
-	db.query('CREATE TABLE Points(PointID varchar(255), Text varchar(4095), Status int, Hidden bool, StudRoll varchar(255), StudName varchar(255), IBLdap varchar(255), IBName varchar(255), StudComment varchar(4095), Feedback varchar(4095), IndexNo int, DocType varchar(255), ParentPointID varchar(255), HasChild boolean, Tag varchar(255))', (err) => {
+	// Creating a Project table
+	db.query('CREATE TABLE Project(ProjectID varchar(255), Text varchar(4095), Status int, Hidden bool, StudRoll varchar(255), StudName varchar(255), IBLdap varchar(255), IBName varchar(255), StudComment varchar(4095), Feedback varchar(4095), IndexNo int, DocType varchar(255), ParentPointID varchar(255), HasChild boolean, Tag varchar(255))', (err) => {
 		if (err) console.log("Points table exists");
 	});
 }
@@ -82,3 +82,5 @@ app.use(cors({
 app.use(cors2);
 
 app.use(fileUpload());
+
+
