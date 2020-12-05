@@ -321,6 +321,11 @@ app.get("/api/get-student-data", function(req, res) {
 	});
 });
 
+app.get("api/tech/projects",function(req, res) {
+
+	let sesid = req.sessionID;
+	let RollNo
+});
 
 
 app.listen(8080);
