@@ -74,7 +74,7 @@ app.use(myParser.json());
 // app.use(upload.array());
 var allowedOrigins = [STUDENT_URL, VERIFIER_URL];
 var corsOptions = {
-    // origin: 'http://localhost:4200',
+    origin: 'http://localhost:4200',
     credentials: true
 };
 
