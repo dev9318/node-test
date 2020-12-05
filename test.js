@@ -1,13 +1,33 @@
-var mysql = require('mysql');
 const express = require("express");
-const session = require('express-session');
-const fileUpload = require('express-fileupload');
-var cors = require('cors');
+const https = require('https');
+const myParser = require("body-parser");
+//var fastcsv = require('fast-csv');
+var app = express();
+//const sqlite3 = require('sqlite3').verbose();
 const uuid = require('uuid');
+const session = require('express-session');
+var cors = require('cors');
+//var fs = require('fs');
+const fileUpload = require('express-fileupload');
+// var multer = require('multer');
+// var upload = multer();
+//const formidable = require('formidable');
+//const { format } = require("path");
+var mysql = require('mysql');
 require('dotenv').config();
 
+function createTables() {
+	// Code to create students' table
+	db.query('CREATE TABLE Students(FirstName varchar(255), LastName varchar(255), RollNo varchar(255))', (err) => {
+		if (err) console.log("Students table exists");
+	});
 
-var app = express();
+	// Code to create Session table
+	db.query('CREATE TABLE Sessions(SessionKey varchar(255), AccessToken varchar(255), RefreshToken varchar(255), LdapID varchar(255), AccType varchar(255), LoginTime datetime)', (err) => {
+		if (err) console.log("Session table exists");
+	});
+}
+
 
 var db = mysql.createConnection({
   host: "127.0.0.1",
@@ -16,37 +36,25 @@ var db = mysql.createConnection({
   port: 3306,
 });
 
-function createTables() {
-	// Creating a table to store the student's data
-	db.query('CREATE TABLE Students(FirstName varchar(255), LastName varchar(255), RollNo varchar(255))', (err) => {
-		if (err) console.log("Students table exists");
-	});
-
-	// Creating a table to store the value of the session
-	db.query('CREATE TABLE Sessions(SessionKey varchar(255), AccessToken varchar(255), RefreshToken varchar(255), LdapID varchar(255), AccType varchar(255), LoginTime datetime)', (err) => {
-		if (err) console.log("Session table exists");
-	});
-
-	// 
-	db.query('CREATE TABLE IBs(Name varchar(255), LdapID varchar(255), ParentBody varchar(255), Department varchar(255))', (err) => {
-		if (err) console.log("IBs table exists");
-	});
-
-	// Creating a Project table
-	db.query('CREATE TABLE Project(ProjectID varchar(255), Text varchar(4095), Status int, Hidden bool, StudRoll varchar(255), StudName varchar(255), IBLdap varchar(255), IBName varchar(255), StudComment varchar(4095), Feedback varchar(4095), IndexNo int, DocType varchar(255), ParentPointID varchar(255), HasChild boolean, Tag varchar(255))', (err) => {
-		if (err) console.log("Points table exists");
-	});
-}
+// var db = mysql.createConnection({
+// 	host: process.env.HOST,
+// 	user: process.env.USER,
+// 	password: process.env.PASSWORD,
+// 	database: process.env.DATABASE
+// });
 
 db.connect(function(err) {
-  if (err) throw err;
-  console.log("Connected!");
-  // con.query("CREATE DATABASE testing", function (err, result) {
-  //   if (err) throw err;
-  //   console.log("Database created");
-  // });
-  
+	if (err) throw err;
+	createTables();
+	console.log("Connected to MySQL database");
 });
+
+
+const STUDENT_URL = process.env.STUDENT_URL;
+const VERIFIER_URL = process.env.VERIFIER_URL;
+const redirect_uri = process.env.REDIRECT_URI;
+
+const student_types = ['ug', 'dd', 'pg', 'rs'];
 
 app.use(session({
 	genid: (req) => {
@@ -60,27 +68,206 @@ app.use(session({
 	saveUninitialized: true
 }));
 
-
-app.use(cors({
-    origin: '*',
+app.use(myParser.urlencoded({extended : true}));
+app.use(myParser.json());
+// app.use(upload.array());
+var allowedOrigins = [STUDENT_URL, VERIFIER_URL];
+var corsOptions = {
+    // origin: 'http://localhost:4200',
     credentials: true
-  }));
-  var cors2 = function(req, res, next) {
-    // var whitelist = [
-    //   STUDENT_URL,
-    //   VERIFIER_URL,
-    // ];
-    // var origin = req.headers.origin;
-  
-    // if (whitelist.indexOf(origin) > -1) {
-    //   res.setHeader('Access-Control-Allow-Origin', origin);
-    // }
-    res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-    next();
-  }
-app.use(cors2);
+};
 
+app.use(cors(corsOptions));
+
+var cors2 = function(req, res, next) {
+  var whitelist = [
+    STUDENT_URL,
+    VERIFIER_URL,
+  ];
+  var origin = req.headers.origin;
+
+  if (whitelist.indexOf(origin) > -1) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  next();
+}
+app.use(cors2);
 app.use(fileUpload());
 
+//////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
+// A login request is made
+app.get("/api/login", function(req, response) {
 
+	if (req.query.code == undefined) {
+		response.redirect(STUDENT_URL);
+		return;
+	}
+
+	var AUTH_CODE = req.query.code;
+
+	var request_query = 'code='+AUTH_CODE+'&redirect_uri='+redirect_uri+'&grant_type=authorization_code';
+
+	// Create an API call to get access and refresh tokens
+	const options = {
+		hostname: 'gymkhana.iitb.ac.in',
+		path: '/profiles/oauth/token/',  
+		method: 'POST',
+		headers: {
+
+			'Authorization': process.env.SSO_AUTH,
+			'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+		}
+	};
+
+	const request = https.request(options, (res) => {
+		let data = '';
+
+		res.on('data', (chunk) => {
+			data += chunk;
+		});
+
+		res.on('end', () => {
+			let responseResult = JSON.parse(data);
+			console.log(responseResult);
+
+			if (responseResult.access_token != undefined) {
+
+				// Create an API call to fetch student data
+				const options2 = {
+					hostname: 'gymkhana.iitb.ac.in',
+					path: '/profiles/user/api/user/?fields=first_name,last_name,type,roll_number',  
+					method: 'GET',
+					headers: {
+						'Authorization': 'Bearer ' + responseResult.access_token,
+					}
+				};
+
+				const getRequest = https.request(options2, (res) => {
+					let data = '';
+
+					res.on('data', (chunk) => {
+						data += chunk;
+					});
+
+					res.on('end', () => {
+						let getResult = JSON.parse(data);
+						console.log(getResult);
+						let accType = "";
+
+						if (getResult.id != undefined) {
+
+							if (student_types.includes(getResult.type)) {		// The login request is made by a student
+								accType += "student"
+
+								db.query("SELECT * FROM Students WHERE RollNo = (?)", [getResult.roll_number], (err, row) => {
+									
+									// Delete any previously active session (very rare)
+									db.query("DELETE FROM Sessions WHERE SessionKey=(?)", [req.sessionID]);
+
+									// If student data doesn't exist in our db, then insert it
+									if (row.length == 0) {
+
+										let vals = [getResult.first_name, getResult.last_name, getResult.roll_number];
+										db.query("INSERT INTO Students VALUES (?, ?, ?)", vals, (err, row) => {
+											// Create a new entry
+											db.query("SELECT * FROM IBs WHERE LdapID = (?)",[vals[2]],(err,row)=>{
+												if(row.length > 0 || IC_LIST.includes(vals[2]))
+													accType += " verifier";
+
+												let values = [req.sessionID, responseResult.access_token, responseResult.refresh_token, getResult.roll_number, accType, new Date().toISOString().slice(0, 19).replace('T', ' ')];
+												db.query("INSERT INTO Sessions VALUES (?, ?, ?, ?, ?, ?)", values);
+												response.redirect(STUDENT_URL);
+												console.log("[LOGIN] Student Login Success ",getResult.roll_number);
+												console.log("[LOGIN] SessionID ",req.sessionID);
+											})
+										});
+									}
+									else {
+										// Create a new entry
+										let vals = [getResult.first_name, getResult.last_name, getResult.roll_number];
+										db.query("SELECT * FROM IBs WHERE LdapID = (?)",[vals[2]],(err,row)=>{
+											if(row.length > 0 || IC_LIST.includes(vals[2]))
+												accType += " verifier";
+
+											let values = [req.sessionID, responseResult.access_token, responseResult.refresh_token, getResult.roll_number, accType, new Date().toISOString().slice(0, 19).replace('T', ' ')];
+											db.query("INSERT INTO Sessions VALUES (?, ?, ?, ?, ?, ?)", values);
+											response.redirect(STUDENT_URL);
+											console.log("[LOGIN] Student Login Success ",getResult.roll_number);
+											console.log("[LOGIN] SessionID ",req.sessionID);
+										})
+									}
+								});
+							}
+							else {						// The login request is made by an IB
+
+								var uname = getResult.username;
+								if (uname == undefined) uname = getResult.roll_number;
+								if (uname == undefined) {
+									response.redirect(VERIFIER_URL);
+									return;
+								}
+
+								db.query("SELECT * FROM IBs WHERE LdapID = (?)", [uname], (err, row) => {
+									
+									// Delete any previously active session (very rare)
+									db.query("DELETE FROM Sessions WHERE SessionKey=(?)", [req.sessionID]);
+
+									// If IB data doesn't exist in our db, then insert it
+									if (row.length == 0) {
+
+										let vals = [getResult.first_name + ' ' + getResult.last_name, uname,getResult.first_name + ' ' + getResult.last_name,'Main'];
+										db.query("INSERT INTO IBs VALUES (?, ?, ?, ?)", vals, (err, row) => {
+											// Create a new entry
+											let values = [req.sessionID, responseResult.access_token, responseResult.refresh_token, uname, 'verifier', new Date().toISOString().slice(0, 19).replace('T', ' ')];
+											db.query("INSERT INTO Sessions VALUES (?, ?, ?, ?, ?, ?)", values);
+											console.log("[LOGIN] IB Login Success",uname);
+											response.redirect(VERIFIER_URL);
+										});
+									}
+									else {
+										// Create a new entry
+										let values = [req.sessionID, responseResult.access_token, responseResult.refresh_token, uname, 'verifier', new Date().toISOString().slice(0, 19).replace('T', ' ')];
+										db.query("INSERT INTO Sessions VALUES (?, ?, ?, ?, ?, ?)", values);
+										console.log("[LOGIN] IB Login Success",uname);
+										response.redirect(VERIFIER_URL);
+									}
+								});
+							}
+						}
+						else {
+							response.redirect(STUDENT_URL);
+						}
+					});
+
+				}).on("error", (err) => {
+					console.log("Error: ", err.message);
+				});
+
+				getRequest.end();
+
+			}
+			else {
+				response.redirect(STUDENT_URL);
+			}
+		});
+
+	}).on("error", (err) => {
+		console.log("Error: ", err.message);
+	});
+
+	request.write(request_query);
+	request.end();
+	
+	// res.sendFile(__dirname + "/frontend.html");
+});
+
+app.get("/api/logout", (req, res) => {
+
+	db.query("DELETE FROM Sessions WHERE SessionKey=(?)", [req.sessionID], () => {
+		res.json({message: "Successfully Logged Out"});
+		console.log("[LOGOUT] Logout Success ",req.sessionID);
+	});
+});
