@@ -25,7 +25,12 @@ function createTables() {
   // Code to create Session table
 	db.query('CREATE TABLE Sessions(SessionKey varchar(255), AccessToken varchar(255), RefreshToken varchar(255), LdapID varchar(255), AccType varchar(255), LoginTime varchar(255))', (err) => {
 		if (err) console.log("Session table exists");
-	});
+  });
+
+  // Code to create Projects table
+	db.query('CREATE TABLE Sessions(SessionKey varchar(255), AccessToken varchar(255), RefreshToken varchar(255), LdapID varchar(255), AccType varchar(255), LoginTime varchar(255))', (err) => {
+		if (err) console.log("Session table exists");
+  });
 }
 
 
