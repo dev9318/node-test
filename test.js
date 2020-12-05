@@ -419,6 +419,134 @@ app.get("api/tech/timeline",function(req, res){
 	});
 });
 
+app.post("/api/tech/project/", (req, response)=> {
+	
+	let sesid = req.body.sessionID;
+	if (sesid == undefined) {
+		return response.json({message: "Invalid request"}); 
+	}
+
+	db.query("SELECT * FROM Sessions WHERE SessionKey=(?)", [sesid], (err, r) => {
+		if (r.length == 0) {
+			console.log(`[ERROR] Point can't be submitted. Unauthorized usage`);
+			response.json({message: "Unauthorized usage"});
+		}
+		else {
+			// r = r[0];
+			// if (!r.AccType.includes("student")) 
+			// {
+			// 	console.log(`[ERROR] Point can't be submitted. Unauthorized usage`);
+			// 	response.json({message: "Unauthorized usage"});
+			// }
+			//else {
+				db.query("SELECT * FROM Students WHERE RollNo = ?", [r.LdapID], (err, studRow) => {
+					if (studRow.length == 0) 
+					{
+						console.log(`[ERROR] Point can't be submitted. Unauthorized usage`);
+						response.json({message: "Unauthorized usage"});
+					}
+					else {
+						studRow = studRow[0];
+						var pid = uuid.v4();			// unique project id
+						var 
+						var ib = req.body.ib;			// institute body
+						var pbody = req.body.pointbody;	// point body
+						var studcom = req.body.studcom;	// student comment
+						var ppid = req.body.ppid;		// Parent point ID
+						var tag = req.body.tag;			// Point Tag
+						var documentation = "";
+						var timeline = "";
+
+						if (!req.files || Object.keys(req.files).length === 0) {
+							documentation = "";
+							timeline = "";
+						}
+						else {
+
+							if (!req.files.doc){
+								documentation = req.files.doc.mimetype;
+								req.files.doc.mv(__dirname+'/docs/'+pid+'doc');
+							}
+							
+							if (!req.files.timeline){
+								timeline = req.files.timeline.mimetype;
+								req.files.timeline.mv(__dirname+'/docs/'+pid+'timeline');
+							}
+							
+						}
+
+						if (studcom == undefined || studcom == 'undefined')
+							studcom = '';
+
+						if (tag == undefined || tag == 'undefined')
+							tag = 'Others';
+
+						if (pbody == "" || pbody == undefined || pbody == "undefined") 
+						{
+							console.log(`[ERROR] Fill point body`);
+							response.json({message: "Fill point body"});
+						}
+
+						else {
+							db.query("SELECT * FROM IBs WHERE LdapID = ?", [ib], (err, row) => {
+								if (row.length == 0) 
+									response.json({message: "Select a valid institute body"});
+								else {
+									row = row[0];
+									if (ppid == undefined) {
+										let vals = [pid, pbody, 0, false, studRow.RollNo, studRow.FirstName + ' '+ studRow.LastName, row.LdapID, row.Name, studcom, "", 0, docType, "null", false, tag];
+										db.query("INSERT INTO Points VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", vals, (err, rw) => {
+											if (err) {
+												console.log(`[ERROR] Point with ${pid} cannot be inserted`);
+												console.log("Error : ",err);
+												response.json({message: "Some error occurred"});
+											}
+											else {
+												response.json({message: "Successfully submitted"});
+												console.log(`[INSERT] Point with ${pid} submitted.`);
+											}
+										});
+									}
+									
+									else {
+										db.query("SELECT * FROM Points WHERE PointID = ?", [ppid], (err, row) => {
+											if (row.length == 0)
+												response.json({message: "Invalid request"});
+											else {
+												row = row[0];
+												if (row.HasChild)
+													response.json({message: "Invalid request"});
+												else {
+													db.query("UPDATE Points SET HasChild = ? WHERE PointID = ?", [true, row.PointID], () => {
+														let vals = [pid, pbody, 0, false, studRow.RollNo, studRow.FirstName + ' '+ studRow.LastName, row.IBLdap, row.IBName, studcom, "", 0, docType, ppid, false, tag];
+														db.query("INSERT INTO Points VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", vals, (err, rw) => {
+															if (err) {
+																response.json({message: "Some error occurred"});
+																console.log(`[ERROR] Point with ${pid} cannot be updated`);
+																console.log("Error : ",err);
+															}
+															else {
+																response.json({message: "Successfully submitted"});
+																console.log(`[UPDATE] Point with ${pid} updated.`);
+															}
+														});
+													});
+												}
+											}
+										});
+									}
+								}
+							});
+							
+						}
+					}
+				});
+				
+			//}
+		}
+	});
+	
+});
 
 
 app.listen(8080);
