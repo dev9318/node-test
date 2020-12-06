@@ -559,7 +559,7 @@ app.post("api/tech/archive",function(req, response){
 			response.json({message: "Invalid request"});		
 		else {
 
-			db.query("UPDATE Projects SET archive = ? WHERE pid = ?", [true, pid], (err, row) => {
+			db.query("UPDATE Projects SET archived = ? WHERE pid = ?", [true, pid], (err, row) => {
 				if (err) {
 					response.json({message: "No document found"});
 					return
@@ -567,6 +567,32 @@ app.post("api/tech/archive",function(req, response){
 				
 				response.json({message: "Successfully submitted"});
 				console.log(`[INSERT] Project: ${pid} archived.`);
+
+			});
+		}
+	});
+});
+
+app.post("api/tech/approve",function(req, response){
+
+	let sesid = req.sessionID;
+	var pid = req.body.pid;
+	
+	db.query("SELECT * FROM Sessions WHERE SessionKey=(?)", [sesid], (err, r) => {
+		if (r.length == 0)
+			response.json({message: "Unauthorized access"});
+		else if(!pid) 
+			response.json({message: "Invalid request"});		
+		else {
+
+			db.query("UPDATE Projects SET approved = ? WHERE pid = ?", [true, pid], (err, row) => {
+				if (err) {
+					response.json({message: "No document found"});
+					return
+				}
+				
+				response.json({message: "Successfully submitted"});
+				console.log(`[INSERT] Project: ${pid} approved.`);
 
 			});
 		}
