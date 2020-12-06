@@ -448,12 +448,17 @@ app.post("/api/tech/project/", (req, response)=> {
 					else {
 						studRow = studRow[0];
 						var pid = uuid.v4();			// unique project id
-						var 
-						var ib = req.body.ib;			// institute body
-						var pbody = req.body.pointbody;	// point body
-						var studcom = req.body.studcom;	// student comment
-						var ppid = req.body.ppid;		// Parent point ID
-						var tag = req.body.tag;			// Point Tag
+						var name: req.body.name; 
+						var initiative_club = r.body.initiative_club;
+						var poc = r.poc;
+						var poc_contact = r.body.poc_contact;
+						var abstract = r.body.abstract;
+						var funds_allocated = r.body.funds_allocated;
+						var funds_reimbursed = r.body.funds_reimbursed
+						var comments = ''; 
+						var approved = false; 
+						var completed = false;
+						var archived = false;
 						var documentation = "";
 						var timeline = "";
 
@@ -475,70 +480,35 @@ app.post("/api/tech/project/", (req, response)=> {
 							
 						}
 
-						if (studcom == undefined || studcom == 'undefined')
-							studcom = '';
+						// if (pbody == "" || pbody == undefined || pbody == "undefined") 
+						// {
+						// 	console.log(`[ERROR] Fill point body`);
+						// 	response.json({message: "Fill point body"});
+						// }
 
-						if (tag == undefined || tag == 'undefined')
-							tag = 'Others';
-
-						if (pbody == "" || pbody == undefined || pbody == "undefined") 
-						{
-							console.log(`[ERROR] Fill point body`);
-							response.json({message: "Fill point body"});
-						}
-
-						else {
-							db.query("SELECT * FROM IBs WHERE LdapID = ?", [ib], (err, row) => {
-								if (row.length == 0) 
-									response.json({message: "Select a valid institute body"});
-								else {
-									row = row[0];
-									if (ppid == undefined) {
-										let vals = [pid, pbody, 0, false, studRow.RollNo, studRow.FirstName + ' '+ studRow.LastName, row.LdapID, row.Name, studcom, "", 0, docType, "null", false, tag];
-										db.query("INSERT INTO Points VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", vals, (err, rw) => {
-											if (err) {
-												console.log(`[ERROR] Point with ${pid} cannot be inserted`);
-												console.log("Error : ",err);
-												response.json({message: "Some error occurred"});
-											}
-											else {
-												response.json({message: "Successfully submitted"});
-												console.log(`[INSERT] Point with ${pid} submitted.`);
-											}
-										});
-									}
+						//else {
+							// db.query("SELECT * FROM IBs WHERE LdapID = ?", [ib], (err, row) => {
+							// 	if (row.length == 0) 
+							// 		response.json({message: "Select a valid institute body"});
+								//else {
 									
-									else {
-										db.query("SELECT * FROM Points WHERE PointID = ?", [ppid], (err, row) => {
-											if (row.length == 0)
-												response.json({message: "Invalid request"});
-											else {
-												row = row[0];
-												if (row.HasChild)
-													response.json({message: "Invalid request"});
-												else {
-													db.query("UPDATE Points SET HasChild = ? WHERE PointID = ?", [true, row.PointID], () => {
-														let vals = [pid, pbody, 0, false, studRow.RollNo, studRow.FirstName + ' '+ studRow.LastName, row.IBLdap, row.IBName, studcom, "", 0, docType, ppid, false, tag];
-														db.query("INSERT INTO Points VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", vals, (err, rw) => {
-															if (err) {
-																response.json({message: "Some error occurred"});
-																console.log(`[ERROR] Point with ${pid} cannot be updated`);
-																console.log("Error : ",err);
-															}
-															else {
-																response.json({message: "Successfully submitted"});
-																console.log(`[UPDATE] Point with ${pid} updated.`);
-															}
-														});
-													});
-												}
-											}
-										});
-									}
+						let vals = [pid, pbody, 0, false, studRow.RollNo, studRow.FirstName + ' '+ studRow.LastName, row.LdapID, row.Name, studcom, "", 0, docType, "null", false, tag];
+						db.query("INSERT INTO Points VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", vals, (err, rw) => {
+							if (err) {
+			        			console.log(`[ERROR] Point with ${pid} cannot be inserted`);
+								console.log("Error : ",err);
+								response.json({message: "Some error occurred"});
+							}
+							else {
+								response.json({message: "Successfully submitted"});
+								console.log(`[INSERT] Point with ${pid} submitted.`);
 								}
-							});
+						});
+									
+								//}
+							//});
 							
-						}
+						//}
 					}
 				});
 				
