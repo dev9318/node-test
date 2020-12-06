@@ -533,24 +533,14 @@ app.post("api/tech/comment",function(req, response){
 			var comments = req.body.comments;
 
 			db.query("UPDATE Projects SET comments = ? WHERE pid = ?", [comments, pid], (err, row) => {
-				if (row.length == 0 || !row[0].timeline) 
+				if (err) {
 					response.json({message: "No document found"});
+					return
+				}
+				
+				response.json({message: "Successfully submitted"});
+				console.log(`[INSERT] Comments of project: ${pid} submitted.`);
 
-				row = row[0];
-				var filepath = './docs/' + pid + 'timeline';
-				fs.readFile(filepath, (err, data) => {
-					if (err) {
-						response.json({message: "Error in reading file"});
-						console.log(`[ERROR] Timeline with ${pid} not readable.`);
-					}
-					else {
-						console.log(`Timeline with PID: ${pid} requested.`);
-						response.setHeader('Content-type', row.timeline);
-						response.setHeader('X-Robots-Tag','noindex, nofollow')
-						response.write(data);
-						return response.end();
-					}
-				});
 			});
 		}
 	});
