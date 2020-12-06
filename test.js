@@ -492,7 +492,7 @@ app.post("/api/tech/project/", (req, response)=> {
 								//else {
 									
 						let vals = [ pid, name, initiative_club, poc, poc_contact, abstract, funds_allocated, funds_reimbursed, documentation, timeline, comments, approved, completed, archived];
-						db.query("INSERT INTO Points VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", vals, (err, rw) => {
+						db.query("INSERT INTO Projects VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", vals, (err, rw) => {
 							if (err) {
 			        			console.log(`[ERROR] Point with ${pid} cannot be inserted`);
 								console.log("Error : ",err);
