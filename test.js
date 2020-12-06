@@ -494,13 +494,13 @@ app.post("/api/tech/project/", (req, response)=> {
 						let vals = [ pid, name, initiative_club, poc, poc_contact, abstract, funds_allocated, funds_reimbursed, documentation, timeline, comments, approved, completed, archived];
 						db.query("INSERT INTO Projects VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", vals, (err, rw) => {
 							if (err) {
-			        			console.log(`[ERROR] Point with ${pid} cannot be inserted`);
+			        			console.log(`[ERROR] Project with ${pid} cannot be inserted`);
 								console.log("Error : ",err);
 								response.json({message: "Some error occurred"});
 							}
 							else {
 								response.json({message: "Successfully submitted"});
-								console.log(`[INSERT] Point with ${pid} submitted.`);
+								console.log(`[INSERT] Project with ${pid} submitted.`);
 								}
 						});
 									
