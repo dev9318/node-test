@@ -446,15 +446,14 @@ app.post("/api/tech/project/", (req, response)=> {
 						response.json({message: "Unauthorized usage"});
 					}
 					else {
-						studRow = studRow[0];
 						var pid = uuid.v4();			// unique project id
-						var name: req.body.name; 
-						var initiative_club = r.body.initiative_club;
-						var poc = r.poc;
-						var poc_contact = r.body.poc_contact;
-						var abstract = r.body.abstract;
-						var funds_allocated = r.body.funds_allocated;
-						var funds_reimbursed = r.body.funds_reimbursed
+						var name = req.body.name; 
+						var initiative_club = req.body.initiative_club;
+						var poc = req.poc;
+						var poc_contact = req.body.poc_contact;
+						var abstract = req.body.abstract;
+						var funds_allocated = req.body.funds_allocated;
+						var funds_reimbursed = req.body.funds_reimbursed
 						var comments = ''; 
 						var approved = false; 
 						var completed = false;
@@ -492,7 +491,7 @@ app.post("/api/tech/project/", (req, response)=> {
 							// 		response.json({message: "Select a valid institute body"});
 								//else {
 									
-						let vals = [pid, pbody, 0, false, studRow.RollNo, studRow.FirstName + ' '+ studRow.LastName, row.LdapID, row.Name, studcom, "", 0, docType, "null", false, tag];
+						let vals = [ pid, name, initiative_club, poc, poc_contact, abstract, funds_allocated, funds_reimbursed, documentation, timeline, comments, approved, completed, archived];
 						db.query("INSERT INTO Points VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", vals, (err, rw) => {
 							if (err) {
 			        			console.log(`[ERROR] Point with ${pid} cannot be inserted`);
