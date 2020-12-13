@@ -31,6 +31,9 @@ function createTables() {
 	db.query('CREATE TABLE Projects(pid varchar(255), name varchar(255), initiative_club varchar(255), poc varchar(255), poc_contact varchar(255), abstract varchar(255), funds_allocated FLOAT(20,5), funds_reimbursed float(20,5), documentation varchar(255), timeline varchar(255), comments varchar(255), approved boolean, completed boolean, archived boolean)', (err) => {
 		if (err) console.log("Projects table exists");
   });
+  	db.query('CREATE TABLE Access(RollNo varchar(255), AccessLevel int, FirstName varchar(255), LastName varchar(255))', (err) => {
+		if (err) console.log("Access table exists");
+	});
 }
 
 
@@ -599,6 +602,33 @@ app.post("api/tech/approve",function(req, response){
 	});
 });
 
+
+
+app.get("api/tech/access",function(req, res){
+
+	let sesid = req.sessionID;
+	var rollno = req.query.rollno;
+	
+	db.query("SELECT * FROM Sessions WHERE SessionKey=(?)", [sesid], (err, r) => {
+		if (r.length == 0)
+			response.json({message: "Unauthorized access"});
+		else if(!rollno) 
+			response.json({message: "Invalid request"});		
+		else {
+			db.query("SELECT * FROM Access WHERE RollNo=(?)", [rollno], (err, row) => {
+				if (row.length == 0 || !row[0].timeline) {
+					response.json({message: "Not authorized", AccessLevel: 1});
+					return;
+				}
+					
+
+				row = row[0];
+				let ac = row.AccessLevel;
+				response.json({AccessLevel: ac});
+			});
+		}
+	});
+});
 
 
 app.listen(8080);
