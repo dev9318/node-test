@@ -631,4 +631,37 @@ app.get("api/tech/access",function(req, response){
 });
 
 
+app.post("api/access",function(req, response){
+
+	let sesid = req.sessionID;
+	
+	
+	db.query("SELECT * FROM Sessions WHERE SessionKey=(?)", [sesid], (err, r) => {
+		if (r.length == 0)
+			response.json({message: "Unauthorized access"});
+		else if(!pid) 
+			response.json({message: "Invalid request"});		
+		else {
+			var rollno = req.body.rollno;
+			var last_name = req.body.lastname;
+			var first_name = req.body.firstname;
+			var accesslevel = re.body.accesslevel;
+			var vals = [rollno, accesslevel, first_name, last_name];
+			db.query("INSERT INTO Access VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", vals, (err, rw) => {
+				if (err) {
+					console.log(`[ERROR] Project with ${pid} cannot be inserted`);
+					console.log("Error : ",err);
+					response.json({message: "Some error occurred"});
+				}
+				else {
+					response.json({message: "Successfully submitted"});
+					console.log(`[INSERT] Project with ${pid} submitted.`);
+					}
+			});
+		}
+	});
+});
+
+
+
 app.listen(8080);
