@@ -352,7 +352,7 @@ app.get("api/tech/projects",function(req, res) {
 	});
 });
 
-app.get("api/tech/doc",function(req, res){
+app.get("api/tech/doc",function(req, response){
 
 	let sesid = req.sessionID;
 	var pid = req.query.pid;
@@ -387,7 +387,7 @@ app.get("api/tech/doc",function(req, res){
 	});
 });
 
-app.get("api/tech/timeline",function(req, res){
+app.get("api/tech/timeline",function(req, response){
 
 	let sesid = req.sessionID;
 	var pid = req.query.pid;
@@ -604,7 +604,7 @@ app.post("api/tech/approve",function(req, response){
 
 
 
-app.get("api/tech/access",function(req, res){
+app.get("api/tech/access",function(req, response){
 
 	let sesid = req.sessionID;
 	var rollno = req.query.rollno;
