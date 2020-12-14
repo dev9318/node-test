@@ -647,15 +647,15 @@ app.post("api/access",function(req, response){
 			var first_name = req.body.firstname;
 			var accesslevel = re.body.accesslevel;
 			var vals = [rollno, accesslevel, first_name, last_name];
-			db.query("INSERT INTO Access VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", vals, (err, rw) => {
+			db.query("INSERT INTO Access VALUES (?, ?, ?, ?)", vals, (err, rw) => {
 				if (err) {
-					console.log(`[ERROR] Project with ${pid} cannot be inserted`);
+					console.log(`[ERROR] Data with rollno: ${rollno} cannot be inserted`);
 					console.log("Error : ",err);
 					response.json({message: "Some error occurred"});
 				}
 				else {
 					response.json({message: "Successfully submitted"});
-					console.log(`[INSERT] Project with ${pid} submitted.`);
+					console.log(`[INSERT] Head with ${rollno} added.`);
 					}
 			});
 		}
