@@ -631,7 +631,7 @@ app.get("api/tech/access",function(req, response){
 });
 
 
-app.post("api/access",function(req, response){
+app.post("api/tech/access-edit",function(req, response){
 
 	let sesid = req.sessionID;
 	
